@@ -84,7 +84,7 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   subdomains: ['a', 'b', 'c']
 }).addTo(map);
 
-L.control.layers(baseLayers, overlays, {position: 'bottomleft'}).addTo(map);
+L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
 map.invalidateSize();
 //Accordions are the collapsable and expandable categories in green
 $(document).ready(function () {
@@ -130,16 +130,18 @@ function Action(el) {
 
 //  <!-- This takes the labels from the database which have underscores and removes them, and capitalizes the first character -->
 
-// open the navigation bar
+
 function openNav() {
   $("#SpanHeader").toggleClass("Black");
   $("#SpanHeader2").toggleClass("Black");
+  $("#filter-toggle").attr("onclick","closeNav()");
   document.getElementById("myNav").style.width = "30%";
 }
-// close the navigation bar
+
 function closeNav() {
   $("#SpanHeader").removeClass("Black");
   $("#SpanHeader2").toggleClass("Black");
+  $("#filter-toggle").attr("onclick","openNav()");
   document.getElementById("myNav").style.width = "0%";
 }
 

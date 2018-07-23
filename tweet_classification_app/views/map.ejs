@@ -1,7 +1,12 @@
 <% title = 'Tweet Classification' %>
 
+<div class = "wrapper">
+
+  <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:void(0)" class="closebtn" onclick="openNav()">
+    <i class="fa fa-bars"></i>
+  </a>
+
   <div id="myNav" class="overlay">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     <!-- The key is an image,so depending on the collection code we are displaying the right key -->
     <!-- You can change this so that the markers image are constant, and you just change the text boxes -->
     <!-- Start button enables a link so that the simulator begins, next to the button the key is displayed -->
@@ -38,28 +43,14 @@
   </div>
 
   <!-- This displays the map -->
-  <div id="map">
+  <div id="map"></div>
 
-    <br>
-    <br>
-    <br>
-    <br>
-
-    <div class="btn-group" style="z-index: 401">
-      <!-- Use 401 to be between map and controls-->
-      <!-- This is the three lines that opens the filters -->
-      <span id="SpanHeader" class="CourseHeader" onclick="openNav()">&#9776; &nbsp </span>
-      <!-- Click me image next to it -->
-      <img src="/click.png" id="SpanHeader2" class="CourseHeader2">
-    </div>
-
-
-
-  </div>
+</div>
 
   <script src = "/interface.js"></script>
 
   <script>
+
     var query_code = '';
     var collection_code = '<%=packet.code%>';
     var class_labels = '<%=packet.class_labels%>'.split(",");
