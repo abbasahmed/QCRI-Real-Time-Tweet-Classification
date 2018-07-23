@@ -1,56 +1,63 @@
 <% title = 'Tweet Classification' %>
 
-<div class = "wrapper">
 
-  <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:void(0)" class="closebtn" onclick="openNav()">
-    <i class="fa fa-bars"></i>
-  </a>
+<div id="mySidenav" class="sidenav">
+  <button onclick="if (this.value == 'Start') return Action(this);" type="buttons" value="Start" id="allbus" class="btn btn-success"> Start
+  </button>
+  <br>
+  <br>
+  <!-- <a href="javascript:void(0)">Filter By Labels</a>
+  <a href="javascript:void(0)">Filter By Confidence</a> -->
 
-  <div id="myNav" class="overlay">
-    <!-- The key is an image,so depending on the collection code we are displaying the right key -->
-    <!-- You can change this so that the markers image are constant, and you just change the text boxes -->
-    <!-- Start button enables a link so that the simulator begins, next to the button the key is displayed -->
-    <center><button onclick="if (this.value == 'Start') return Action(this);" type="buttons" value="Start" style=" margin-top: 10px; position: absolute; left: 10%; top: 40; width: 65px;" id="allbus" class="btn btn-success"> Start
-    </button></center>
+  <button class="accordion">Filter By Humanitarian Class Labels</button>
+  <div class="panel">
 
-    <!-- Four categories are coded here, and it is user defined in the myconf file and is displayed here -->
-    <div id="damage_accordion">
-      <button class="accordion"><%=sails.config.myconf.filter1 %></button>
-      <div class="overlay-content" align="left" id="severitymaster">
-      </div>
-      <div class="slidecontainer" id="slidecontainer1">
-      </div>
-    </div>
-
-    <div id="class_accordion">
-      <button class="accordion"><%=sails.config.myconf.filter2 %></button>
-      <div class="overlay-content" align="left" id="aidrmaster"></div>
-      <div class="slidecontainer" id="slidecontainer2">
-      </div>
-    </div>
-
-    <div id="sentiment_accordion">
-      <button class="accordion"><%=sails.config.myconf.filter3 %></button>
-      <div class="overlay-content" align="left" id="sentimentmaster"></div>
-      <div class="slidecontainer" id="slidecontainer3">
-      </div>
-    </div>
-    <div id="image_existence_accordion">
-      <button class="accordion"><%=sails.config.myconf.filter4 %></button>
-      <div class="overlay-content" align="left" id="imagemaster"></div>
+    <div class="overlay-content" align="left" id="aidrmaster"></div>
+    <div class="slidecontainer" id="slidecontainer2">
     </div>
 
   </div>
 
-  <!-- This displays the map -->
-  <div id="map"></div>
+  <button class="accordion">Filter By Sentiment</button>
+  <div class="panel">
+    <div class="overlay-content" align="left" id="sentimentmaster"></div>
+    <div class="slidecontainer" id="slidecontainer3">
+    </div>
+  </div>
+
+  <button class="accordion">Filter By Severity</button>
+  <div class="panel">
+    <div class="overlay-content" align="left" id="severitymaster">
+    </div>
+    <div class="slidecontainer" id="slidecontainer1">
+    </div>
+  </div>
+
+  <button class="accordion">Filter By Image Existence</button>
+  <div class="panel">
+    <div class="overlay-content" align="left" id="imagemaster"></div>
+  </div>
+    <!-- <div class="overlay-content" align="left" id="severitymaster">
+    </div>
+    <div class="slidecontainer" id="slidecontainer1">
+    </div> -->
+  </div>
 
 </div>
+
+<div id= "main" class = "wrapper">
+
+  <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:void(0)" class="closebtn float-right" onclick="openSideBar()">
+    <i class="fa fa-bars" style="text-decoration: none !important;"></i>
+  </a>
+  <!-- This displays the map -->
+  <div id="map"></div>
+</div>
+
 
   <script src = "/interface.js"></script>
 
   <script>
-
     var query_code = '';
     var collection_code = '<%=packet.code%>';
     var class_labels = '<%=packet.class_labels%>'.split(",");
@@ -63,4 +70,5 @@
     data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels);
     localizer(display_sentiment, display_severity, display_aidr);
     fillupAccordions();
+    filler();
   </script>

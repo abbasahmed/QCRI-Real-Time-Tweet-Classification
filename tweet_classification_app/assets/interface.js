@@ -86,13 +86,6 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
 map.invalidateSize();
-//Accordions are the collapsable and expandable categories in green
-$(document).ready(function () {
-    $('#sidebarCollapse').on('click', function () {
-        $('#sidebar').toggleClass('active');
-        $(this).toggleClass('active');
-    });
-});
 
 // Start button enables the simulator
 
@@ -131,17 +124,28 @@ function Action(el) {
 //  <!-- This takes the labels from the database which have underscores and removes them, and capitalizes the first character -->
 
 
+function openSideBar() {
+  document.getElementById("mySidenav").style.width = "250px";
+  document.getElementById("main").style.marginLeft = "250px";
+  $("#filter-toggle").attr("onclick","closeSideBar()");
+}
+
+function closeSideBar() {
+  document.getElementById("mySidenav").style.width = "0";
+  document.getElementById("main").style.marginLeft= "0";
+  $("#filter-toggle").attr("onclick","openSideBar()");
+}
+
+// open the navigation bar
 function openNav() {
   $("#SpanHeader").toggleClass("Black");
   $("#SpanHeader2").toggleClass("Black");
-  $("#filter-toggle").attr("onclick","closeNav()");
   document.getElementById("myNav").style.width = "30%";
 }
-
+// close the navigation bar
 function closeNav() {
   $("#SpanHeader").removeClass("Black");
   $("#SpanHeader2").toggleClass("Black");
-  $("#filter-toggle").attr("onclick","openNav()");
   document.getElementById("myNav").style.width = "0%";
 }
 
@@ -234,60 +238,29 @@ function dyrender(s1, s2, s3) {
   num.appendChild(tr);
 }
 
-// function filler(){
-//
-//     var acc = document.getElementsByClassName("accordion");
-//     var i;
-//     for (i = 0; i < acc.length; i++) {
-//       acc[i].addEventListener("click", function() {
-//         this.classList.toggle("active");
-//         var panel = this.nextElementSibling;
-//         if (panel.style.display === "block") {
-//           panel.style.display = "none";
-//         } else {
-//           panel.style.display = "block";
-//         }
-//       });
-//     }
-//
-//     if(packet.total_labels != 0){
-//       if(packet.damage_labels.length != 0){
-//         for(i in packet.damage_labels){
-//           var check_val = 'damage_check'+i;
-//           var nice_label = packet.damage_labels[i];
-//           if (nice_label == 'null') {
-//             nice_label = 'Unknown';
-//           } else if (nice_label == 'None') {
-//             nice_label = 'Zero';
-//           } else if (nice_label == 'Severe') {
-//             nice_label = 'High';
-//           }
-//           $('#severity').html($('#severity').html()
-//           +'<div class="form-check">'
-//           +'<input class="form-check-input" type="checkbox" class = "severity" value="'+packet.damage_labels[i]+'" id="'+check_val+'" onclick="task(event);">'
-//           +'  <label align = "left" class="form-check-label" for="'+check_val+'"> '+nice_label+' </label>'
-//           +"</div>");
-//         }
-//
-//       }
-//     }
-// }
-
 function fillupAccordions() {
 
   var acc = document.getElementsByClassName("accordion");
   var i;
+
   for (i = 0; i < acc.length; i++) {
     acc[i].addEventListener("click", function() {
       this.classList.toggle("active");
       var panel = this.nextElementSibling;
-      if (panel.style.display === "block") {
-        panel.style.display = "none";
+      if (panel.style.maxHeight){
+        panel.style.maxHeight = null;
       } else {
-        panel.style.display = "block";
+        panel.style.maxHeight = panel.scrollHeight + "px";
       }
     });
   }
+
+
+    $("#filter-toggle").click(function() {
+      $("#filter-toggle > .fa-bars, #filter-toggle > .fa-times").toggleClass("fa-bars fa-times");
+    });
+
+
 
   if (packet.total_labels != 0) {
     if (packet.damage_labels.length != 0) {
@@ -302,7 +275,7 @@ function fillupAccordions() {
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.align = "left";
-        checkbox.className = "severity";
+        checkbox.className = "severity form-check-input";
         checkbox.value = ele;
         slc1.appendChild(checkbox);
         var label = document.createElement('label')
@@ -360,7 +333,7 @@ function fillupAccordions() {
         var check = ele.charAt(0).toUpperCase() + ele.slice(1);
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.className = "aidr";
+        checkbox.className = "aidr form-check-input";
         checkbox.value = ele;
         slc2.appendChild(checkbox);
         var label = document.createElement('label')
@@ -410,7 +383,7 @@ function fillupAccordions() {
         var ele = packet.sentiment_labels[i];
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.className = "sentiment";
+        checkbox.className = "sentiment form-check-input";
         checkbox.value = ele;
         slc3.appendChild(checkbox);
         var label = document.createElement('label')
@@ -461,7 +434,7 @@ function fillupAccordions() {
         var check = ele.charAt(0).toUpperCase() + ele.slice(1);
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.className = "image";
+        checkbox.className = "image form-check-input";
         checkbox.value = ele;
         slc4.appendChild(checkbox);
         var label = document.createElement('label')
@@ -520,6 +493,8 @@ function task(e) {
       }
     }
   }
+  console.log('str: '+str);
+
   if (str != '') {
     str = str.trim();
     str = str.split(' ');
