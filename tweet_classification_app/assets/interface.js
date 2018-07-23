@@ -14,10 +14,16 @@ var locals = {
   query_code: '',
 };
 
-var sockets = {
-  outer: io.sails.connect(),
-  inner: io.sails.connect(),
-};
+var slider_values = {
+  damage: 0,
+  class: 0,
+  sentiment: 0,
+}
+
+var active_flag = 1;
+
+var socket = io.sails.connect();
+
 
 var icons = {
   'relevant_information': 'fa-thumbs-up',
@@ -65,8 +71,12 @@ var map = L.map('map', {
   center: [20.0, 5.0],
   minZoom: 2,
   zoom: 2,
+  zoomControl: true,
+  worldCopyJump: true,
   layers: [streets, mcg]
 });
+
+map.zoomControl.setPosition('topright');
 
 // setting the map with diffrent properties + different layers
 L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -74,10 +84,15 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   subdomains: ['a', 'b', 'c']
 }).addTo(map);
 
-L.control.layers(baseLayers, overlays).addTo(map);
-
+L.control.layers(baseLayers, overlays, {position: 'bottomleft'}).addTo(map);
+map.invalidateSize();
 //Accordions are the collapsable and expandable categories in green
-
+$(document).ready(function () {
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+        $(this).toggleClass('active');
+    });
+});
 
 // Start button enables the simulator
 
@@ -103,6 +118,7 @@ function Action(el) {
   my_window = window.open('http://localhost:1337/sim/add', '', 'width=,height=,resizable=no');
   windoww = my_window;
   my_window.focus();
+  active_flag = 0;
   task(event);
   if (el.value === "Start")
     el.value = "Stop";
@@ -128,60 +144,68 @@ function closeNav() {
 }
 
 
-function tweet_loader(qu, flag) {
+function tweet_loader(tQuery, flag) {
+  //1 for not active
+  //0 for active
   var timer = 5000;
+
   if(flag == 1){
     timer = 0;
   }
+
   var loader = setInterval(
     function() {
-      sockets.outer.get(qu, function(resData, jwres) {
-      for (i in resData.sim) {
-        let latitude = resData.sim[i].latitude;
-        let longitude = resData.sim[i].longitude;
-        let tweet_text = resData.sim[i].tweet_text;
-        let img_src = resData.sim[i].image_physical_location;
-        let class_label = labelize(resData.sim[i].aidr_class_label);
-        let sentiment_label = resData.sim[i].sentiment;
-        let severity_label = resData.sim[i].image_damage_class;
+      socket.get(tQuery, function(tweets) {
+        mcg.clearLayers();
+        map.addLayer(mcg);
+        for (i in tweets.sim) {
+          let latitude = tweets.sim[i].latitude;
+          let longitude = tweets.sim[i].longitude;
+          let tweet_text = tweets.sim[i].tweet_text;
+          let img_src = tweets.sim[i].image_physical_location;
+          let class_label = labelize(tweets.sim[i].aidr_class_label);
+          let sentiment_label = tweets.sim[i].sentiment;
+          let severity_label = tweets.sim[i].image_damage_class;
 
-        var tweet_link = linkify(tweet_text);
+          var tweet_link = linkify(tweet_text);
 
-        let tweet_marker = lazyMarkers(class_label, sentiment_label);
+          let marker_icon = iconMaker(class_label, sentiment_label);
 
-        var marker = new L.marker([longitude, latitude], {
-          icon: tweet_marker
-        }).addTo(mcg);
+          var marker = new L.marker([longitude, latitude], {
+            icon: marker_icon
+          }).addTo(mcg);
 
-        // in the database, the records that are null for severity, we set it to unknown, and those which say None we set it to Zero
-        if (severity_label == '') {
-          severity_label = "Unknown";
+          // in the database, the records that are null for severity, we set it to unknown, and those which say None we set it to Zero
+          if (severity_label == '') {
+            severity_label = "Unknown";
+          }
+          if (severity_label == 'None') {
+            severity_label = "Zero";
+          }
+
+          if(img_src != ''){
+            marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img class='size'  src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
+              locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
+          } else {
+            marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
+              locals.display_severity + '</b>' + severity_label + '</p>');
+          }
         }
-        if (severity_label == 'None') {
-          severity_label = "Zero";
+        // this is to ensure the querying is done for new markers only
+        if (tweets.sim.length != 0) {
+          let new_time = tweets.sim[0].createtime;
+          let curr_query = query_code;
+          var index = curr_query.indexOf("q8");
+          var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
+          query_code = new_query;
         }
-
-        if(img_src != ''){
-          marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img class='size'  src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
-            locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
-        } else {
-          marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
-            locals.display_severity + '</b>' + severity_label + '</p>');
-        }
+      });
+      if(flag == 1){
+        clearInterval(loader);
       }
-      // this is to ensure the querying is done for new markers only
-      if (resData.sim.length != 0) {
-        let new_time = resData.sim[0].createtime;
-        let curr_query = query_code;
-        var index = curr_query.indexOf("q8");
-        var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
-        query_code = new_query;
-      }
-    });
-    if(flag == 1){
-      clearInterval(loader);
-    }
-  }, timer);
+    }, timer
+  );
+
 }
 
 function dyrender(s1, s2, s3) {
@@ -207,6 +231,45 @@ function dyrender(s1, s2, s3) {
   tr.appendChild(td);
   num.appendChild(tr);
 }
+
+// function filler(){
+//
+//     var acc = document.getElementsByClassName("accordion");
+//     var i;
+//     for (i = 0; i < acc.length; i++) {
+//       acc[i].addEventListener("click", function() {
+//         this.classList.toggle("active");
+//         var panel = this.nextElementSibling;
+//         if (panel.style.display === "block") {
+//           panel.style.display = "none";
+//         } else {
+//           panel.style.display = "block";
+//         }
+//       });
+//     }
+//
+//     if(packet.total_labels != 0){
+//       if(packet.damage_labels.length != 0){
+//         for(i in packet.damage_labels){
+//           var check_val = 'damage_check'+i;
+//           var nice_label = packet.damage_labels[i];
+//           if (nice_label == 'null') {
+//             nice_label = 'Unknown';
+//           } else if (nice_label == 'None') {
+//             nice_label = 'Zero';
+//           } else if (nice_label == 'Severe') {
+//             nice_label = 'High';
+//           }
+//           $('#severity').html($('#severity').html()
+//           +'<div class="form-check">'
+//           +'<input class="form-check-input" type="checkbox" class = "severity" value="'+packet.damage_labels[i]+'" id="'+check_val+'" onclick="task(event);">'
+//           +'  <label align = "left" class="form-check-label" for="'+check_val+'"> '+nice_label+' </label>'
+//           +"</div>");
+//         }
+//
+//       }
+//     }
+// }
 
 function fillupAccordions() {
 
@@ -279,7 +342,7 @@ function fillupAccordions() {
       slid1inp.className = "paralign";
       var slid1inspan = document.createElement('span');
       slid1inspan.className = "smallbutton";
-      slid1inspan.id = "demon";
+      slid1inspan.id = "damage_slider";
       slid1inp.appendChild(slid1inspan);
       slid1.appendChild(slid1in);
       slid1.appendChild(slid1inp);
@@ -327,7 +390,7 @@ function fillupAccordions() {
       slid2inp.className = "paralign";
       var slid2inspan = document.createElement('span');
       slid2inspan.className = "smallbutton";
-      slid2inspan.id = "demon1";
+      slid2inspan.id = "class_slider";
       slid2inp.appendChild(slid2inspan);
       slid2.appendChild(slid2in);
       slid2.appendChild(slid2inp);
@@ -378,7 +441,7 @@ function fillupAccordions() {
       slid3inp.className = "paralign";
       var slid3inspan = document.createElement('span');
       slid3inspan.className = "smallbutton";
-      slid3inspan.id = "demon2";
+      slid3inspan.id = "sentiment_slider";
       slid3inp.appendChild(slid3inspan);
       slid3.appendChild(slid3in);
       slid3.appendChild(slid3inp);
@@ -412,7 +475,7 @@ function fillupAccordions() {
   }
   //<!-- Slider  -->
   var slider = document.getElementById("myRange");
-  var output = document.getElementById("demon");
+  var output = document.getElementById("damage_slider");
   output.innerHTML = slider.value;
   slider.oninput = function() {
     output.innerHTML = this.value;
@@ -421,7 +484,7 @@ function fillupAccordions() {
     task(event);
   }
   var slider1 = document.getElementById("myRange1");
-  var output1 = document.getElementById("demon1");
+  var output1 = document.getElementById("class_slider");
   output1.innerHTML = slider1.value;
   slider1.oninput = function() {
     output1.innerHTML = this.value;
@@ -430,7 +493,7 @@ function fillupAccordions() {
     task(event);
   }
   var slider2 = document.getElementById("myRange2");
-  var output2 = document.getElementById("demon2");
+  var output2 = document.getElementById("sentiment_slider");
   output2.innerHTML = slider2.value;
   slider2.oninput = function() {
     output2.innerHTML = this.value;
@@ -532,16 +595,16 @@ function task(e) {
   }
   // Then all the querying are combined and sent to the controller.
   // Remember: Across different categories it is an "AND" cosntion, and within a category it is an "OR" condition
-  var qu = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("demon").innerHTML + '&q11=' + document.getElementById(
-    "demon1").innerHTML + '&q12=' + document.getElementById("demon2").innerHTML + '&q8=' + 'xyz';
-  query_code = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 1 + '&q7=' + 1 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("demon").innerHTML + '&q11=' + document.getElementById(
-    "demon1").innerHTML + '&q12=' + document.getElementById("demon2").innerHTML + '&q8=' + 'xyz';
-  tweet_loader(qu, 0);
+  var qu = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById(
+    "class_slider").innerHTML + '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz';
+  query_code = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 1 + '&q7=' + 1 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById(
+    "class_slider").innerHTML + '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz';
+  tweet_loader(qu, active_flag);
 }
 //<!-- Load the slider  -->
 window.onload = function() {
-  tweet_loader('/tweets/filteror?q1=' + '' + '&q2=' + '' + '&q3=' + '' + '&q4=' + '' + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("demon").innerHTML + '&q11=' + document.getElementById("demon1").innerHTML +
-    '&q12=' + document.getElementById("demon2").innerHTML + '&q8=' + 'xyz', 1);
+  tweet_loader('/tweets/filteror?q1=' + '' + '&q2=' + '' + '&q3=' + '' + '&q4=' + '' + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById("class_slider").innerHTML +
+    '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz', active_flag);
 }
 
 
@@ -570,7 +633,7 @@ function linkify(tweet) {
   return link;
 }
 
-function lazyMarkers(class_label, sentiment_label) {
+function iconMaker(class_label, sentiment_label) {
   var awesome_icon = 'fa-circle-o';
   var awesome_color = 'dimgray';
   if (icons.hasOwnProperty(unlabelize(class_label))) {

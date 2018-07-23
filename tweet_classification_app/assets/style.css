@@ -1,4 +1,4 @@
-body, html {
+body, html, #map {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -107,7 +107,7 @@ body {
   padding: 0;
   margin: 0;
 }
-html, body, #map {
+html, body, .wrapper, #map {
   height: 100%;
   width: 100%;
 }
