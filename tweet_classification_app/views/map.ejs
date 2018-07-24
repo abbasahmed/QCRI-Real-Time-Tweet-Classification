@@ -9,66 +9,57 @@
   <!-- <a href="javascript:void(0)">Filter By Labels</a>
   <a href="javascript:void(0)">Filter By Confidence</a> -->
 
-  <button class="accordion">Filter By Humanitarian Class Labels</button>
+  <button class="accordion">Filter By Humanitarian Labels</button>
   <div class="panel">
-
-    <div class="overlay-content" align="left" id="aidrmaster"></div>
-    <div class="slidecontainer" id="slidecontainer2">
-    </div>
-
+    <div id="render_class"></div>
+    <div class="range-slider" id="slider_class"></div>
   </div>
 
   <button class="accordion">Filter By Sentiment</button>
   <div class="panel">
-    <div class="overlay-content" align="left" id="sentimentmaster"></div>
-    <div class="slidecontainer" id="slidecontainer3">
-    </div>
+    <div id="render_sentiment"></div>
+    <div class="range-slider" id="slider_sentiment"></div>
   </div>
 
   <button class="accordion">Filter By Severity</button>
   <div class="panel">
-    <div class="overlay-content" align="left" id="severitymaster">
-    </div>
-    <div class="slidecontainer" id="slidecontainer1">
-    </div>
+    <div id="render_severity"></div>
+    <div class="range-slider" id="slider_severity"></div>
   </div>
 
   <button class="accordion">Filter By Image Existence</button>
   <div class="panel">
-    <div class="overlay-content" align="left" id="imagemaster"></div>
+    <div id="render_existence"></div>
   </div>
-    <!-- <div class="overlay-content" align="left" id="severitymaster">
-    </div>
-    <div class="slidecontainer" id="slidecontainer1">
-    </div> -->
   </div>
-
 </div>
+
 
 <div id= "main" class = "wrapper">
 
-  <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:void(0)" class="closebtn float-right" onclick="openSideBar()">
-    <i class="fa fa-bars" style="text-decoration: none !important;"></i>
+  <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:;" class="closebtn float-right" onclick="openSideBar()">
+    <i class="fas fa-sliders-h" style="text-decoration: none !important;"></i>
   </a>
   <!-- This displays the map -->
   <div id="map"></div>
 </div>
 
+<script src = "/interface.js"></script>
 
-  <script src = "/interface.js"></script>
+<script>
 
-  <script>
-    var query_code = '';
-    var collection_code = '<%=packet.code%>';
-    var class_labels = '<%=packet.class_labels%>'.split(",");
-    var damage_labels = '<%=packet.damage_labels%>'.split(",");
-    var sentiment_labels = '<%=packet.sentiment_labels%>'.split(",");
-    var image_existence_labels = '<%=packet.image_existence_labels%>'.split(",");
-    var display_sentiment = '<%= sails.config.myconf.displaysentiment %>';
-    var display_severity = '<%= sails.config.myconf.displayseverity %>';
-    var display_aidr = '<%= sails.config.myconf.displayaidr %>';
-    data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels);
-    localizer(display_sentiment, display_severity, display_aidr);
-    fillupAccordions();
-    filler();
-  </script>
+  var query_code = '';
+  var collection_code = '<%=packet.code%>';
+  var class_labels = '<%=packet.class_labels%>'.split(",");
+  var damage_labels = '<%=packet.damage_labels%>'.split(",");
+  var sentiment_labels = '<%=packet.sentiment_labels%>'.split(",");
+  var image_existence_labels = '<%=packet.image_existence_labels%>'.split(",");
+  var display_sentiment = '<%= sails.config.myconf.displaysentiment %>';
+  var display_severity = '<%= sails.config.myconf.displayseverity %>';
+  var display_aidr = '<%= sails.config.myconf.displayaidr %>';
+  data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels);
+  localizer(display_sentiment, display_severity, display_aidr);
+  fillupAccordions();
+  sliders();
+
+</script>

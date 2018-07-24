@@ -24,7 +24,6 @@ var active_flag = 1;
 
 var socket = io.sails.connect();
 
-
 var icons = {
   'relevant_information': 'fa-thumbs-up',
   'personal': 'fa-user',
@@ -56,12 +55,13 @@ var streets = L.tileLayer(mbUrl, {
     id: 'mapbox.streets-satellite',
     attribution: mbAttr
   });
+
 var baseLayers = {
   "Streets": streets,
   "Satellite": satellite
 };
 
-var mcg = L.markerClusterGroup();
+var mcg = L.markerClusterGroup({chunkedLoading: true});
 
 var overlays = {
   "Markers": mcg
@@ -119,11 +119,6 @@ function Action(el) {
     el.value = "Start";
 }
 
-
-
-//  <!-- This takes the labels from the database which have underscores and removes them, and capitalizes the first character -->
-
-
 function openSideBar() {
   document.getElementById("mySidenav").style.width = "250px";
   document.getElementById("main").style.marginLeft = "250px";
@@ -136,17 +131,43 @@ function closeSideBar() {
   $("#filter-toggle").attr("onclick","openSideBar()");
 }
 
-// open the navigation bar
-function openNav() {
-  $("#SpanHeader").toggleClass("Black");
-  $("#SpanHeader2").toggleClass("Black");
-  document.getElementById("myNav").style.width = "30%";
-}
-// close the navigation bar
-function closeNav() {
-  $("#SpanHeader").removeClass("Black");
-  $("#SpanHeader2").toggleClass("Black");
-  document.getElementById("myNav").style.width = "0%";
+
+function sliders(){
+
+  var class_slider = document.getElementById("class")
+  var sentiment_slider = document.getElementById("sentiment")
+  var damage_slider = document.getElementById("damage");
+
+  var cs_val = document.getElementById("class_val");
+  var ss_val = document.getElementById("sentiment_val");
+  var ds_val = document.getElementById("damage_val");
+
+  cs_val.innerHTML = class_slider.value;
+  ss_val.innerHTML = sentiment_slider.value;
+  ds_val.innerHTML = damage_slider.value;
+
+  class_slider.oninput = function() {
+    cs_val.innerHTML = this.value;
+  }
+  sentiment_slider.oninput = function() {
+    ss_val.innerHTML = this.value;
+  }
+  damage_slider.oninput = function() {
+    ds_val.innerHTML = this.value;
+  }
+
+  class_slider.onmouseup = function() {
+    slider_values["class"] = cs_val.innerHTML;
+    filter();
+  }
+  sentiment_slider.onmouseup = function() {
+    slider_values["senti"] = ss_val.innerHTML;
+    filter();
+  }
+  damage_slider.onmouseup = function() {
+    slider_values["damage"] = ds_val.innerHTML;
+    filter();
+  }
 }
 
 
@@ -200,10 +221,10 @@ function tweet_loader(tQuery, flag) {
         // this is to ensure the querying is done for new markers only
         if (tweets.sim.length != 0) {
           let new_time = tweets.sim[0].createtime;
-          let curr_query = query_code;
+          let curr_query = locals.query_code;
           var index = curr_query.indexOf("q8");
           var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
-          query_code = new_query;
+          locals.query_code = new_query;
         }
       });
       if(flag == 1){
@@ -214,29 +235,99 @@ function tweet_loader(tQuery, flag) {
 
 }
 
-function dyrender(s1, s2, s3) {
-  var num = document.getElementById(s1);
-  var td = document.createElement('td');
-  var tr = document.createElement('tr');
-  var h4 = document.createElement('h4');
-  var div = document.createElement('div');
-  div.id = s2;
-  var txt = document.createTextNode(s3);
-  h4.appendChild(txt);
-  td.appendChild(h4);
-  tr.appendChild(td);
-  num.appendChild(tr);
-  td = document.createElement('td');
-  tr = document.createElement('tr');
-  td.appendChild(div);
-  tr.appendChild(td);
-  num.appendChild(tr);
-  td = document.createElement('td');
-  tr = document.createElement('tr');
-  td.appendChild(document.createTextNode('\u00A0'));
-  tr.appendChild(td);
-  num.appendChild(tr);
+
+function filter(){
+
+  var class_filters = document.getElementsByClassName('class_checks');
+  var sentiment_filters = document.getElementsByClassName('sentiment_checks');
+  var severity_filters = document.getElementsByClassName('severity_checks');
+  var image_existence_filters = document.getElementsByClassName('image_existence_checks');
+
+
+  var active_filters = {
+    class: [],
+    sentiment: [],
+    severity: [],
+    image_existence: ''
+  }
+
+  var str = '';
+  for (i = 0; i < packet.class_labels.length; i++) {
+    if (class_filters[i].checked == true) {
+      active_filters.class.push(class_filters[i].value);
+    }
+  }
+  for (i = 0; i < packet.sentiment_labels.length; i++) {
+    if (sentiment_filters[i].checked == true) {
+      active_filters.sentiment.push(sentiment_filters[i].value);
+    }
+  }
+  for (i = 0; i < packet.damage_labels.length; i++) {
+    if (severity_filters[i].checked == true) {
+      active_filters.severity.push(severity_filters[i].value);
+    }
+  }
+
+  if (image_existence_filters[0].checked == true && image_existence_filters[1].checked == false) {
+    active_filters.image_existence = 'no';
+  } else if (image_existence_filters[0].checked == false && image_existence_filters[1].checked == true){
+    active_filters.image_existence = 'yes';
+  } else if (image_existence_filters[0].checked == false && image_existence_filters[1].checked == false){
+    active_filters.image_existence = 'both2';
+  }
+
+  var filter_query = {
+    class: '',
+    sentiment: '',
+    severity: '',
+    image_existence: active_filters.image_existence
+  }
+
+  for (i in active_filters.severity) {
+    if (active_filters.severity[i] == "null") {
+      active_filters.severity[i] = '';
+    }
+      filter_query.severity += '{image_damage_class:' + '\"' + active_filters.severity[i] + '\"' + '}';
+  }
+
+  for (i in active_filters.class) {
+      filter_query.class+= '{aidr_class_label:' + '\"' + active_filters.class[i] + '\"' + '}';
+  }
+
+  for (i in active_filters.sentiment) {
+      filter_query.sentiment+= '{sentiment:' + '\"' + active_filters.sentiment[i] + '\"' + '}';
+  }
+
+
+  console.log(filter_query);
+
+  var queryy = '/tweets/filteror?q1=' + filter_query.severity
+                + '&q2=' + filter_query.class
+                + '&q3=' + filter_query.sentiment
+                + '&q4=' + filter_query.image_existence
+                + '&q5=' + 0
+                + '&q7=' + 0
+                + '&q9=' + packet.collection_code
+                + '&q10=' + slider_values.damage
+                + '&q11=' + slider_values.class
+                + '&q12=' + slider_values.sentiment
+                + '&q8=' + 'xyz';
+  console.log(queryy);
+
+  locals.query_code = '/tweets/filteror?q1=' + filter_query.severity
+                        + '&q2=' + filter_query.class
+                        + '&q3=' + filter_query.sentiment
+                        + '&q4=' + filter_query.image_existence
+                        + '&q5=' + 1
+                        + '&q7=' + 1
+                        + '&q9=' + packet.collection_code
+                        + '&q10=' + slider_values.damage
+                        + '&q11=' + slider_values.class
+                        + '&q12=' + slider_values.sentiment
+                        + '&q8=' + 'xyz';
+  tweet_loader(queryy, active_flag);
 }
+
 
 function fillupAccordions() {
 
@@ -256,225 +347,128 @@ function fillupAccordions() {
   }
 
 
-    $("#filter-toggle").click(function() {
-      $("#filter-toggle > .fa-bars, #filter-toggle > .fa-times").toggleClass("fa-bars fa-times");
-    });
+  $("#filter-toggle").click(function() {
+    $("#filter-toggle > .fa-sliders-h, #filter-toggle > .fa-times").toggleClass("fa-sliders-h fa-times");
+  });
 
 
 
   if (packet.total_labels != 0) {
-    if (packet.damage_labels.length != 0) {
-      //<!-- severitymaster is the id of the div tag under the Severity category button.-->
-      dyrender('severitymaster', 'severity', '');
 
-      for (i in packet.damage_labels) {
-        //<!-- Creating the checkboxes and labels dynamically for severity -->
+    if(packet.class_labels.length != 0){
+      for(i in packet.class_labels){
+        var check_val = 'class_check'+i;
+        var nice_label = labelize(packet.class_labels[i]);
 
-        var slc1 = document.getElementById('severity');
-        var ele = packet.damage_labels[i];
-        var checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.align = "left";
-        checkbox.className = "severity form-check-input";
-        checkbox.value = ele;
-        slc1.appendChild(checkbox);
-        var label = document.createElement('label')
-        label.htmlFor = ele;
-        label.align = "left";
-        label.setAttribute('style', 'color:#000000;');
-        var te = ele;
-        // if there is no severity, do not display anything
-        if ((ele == "null" || ele == '') && packet.damage_labels.length == 1) {
-          te = "";
-          checkbox.style.display = 'none';
-          var x = document.getElementById("damage_accordion");
-          x.innerHTML = "";
-        }
-        if (ele == 'null') {
-          te = 'Unknown';
-        } else if (ele == 'None') {
-          te = 'Zero';
-        } else if (ele == 'Severe') {
-          te = 'High';
-        }
-        label.appendChild(document.createTextNode(te + ' ' + 'Severity'));
-        slc1.appendChild(label);
-        slc1.appendChild(document.createElement("br"));
-        checkbox.setAttribute("onClick", "task(event);");
-
+        $('#render_class').html($('#render_class').html()
+        +'<div class="pretty p-default p-curve p-thick p-smooth">'
+        +'<input type="checkbox" class = "class_checks" value="'+packet.class_labels[i]+'" onClick="filter();"/>'
+        + '<div class="state p-danger-o">'
+        +'  <label for="'+check_val+'"> '+nice_label+' <span><i class ="fa '+icons[packet.class_labels[i]]+'" style="font-size: 10px;"></i></span></label>'
+        + '</div>'
+        +'</div>'
+        +'<br>'
+        +'<br>');
       }
-
-      var slid1 = document.getElementById('slidecontainer1');
-      var slid1in = document.createElement('input');
-      slid1in.type = "range"
-      slid1in.className = "slider";
-      slid1in.id = "myRange";
-      slid1in.min = "0";
-      slid1in.max = "1";
-      slid1in.step = "0.0001";
-      slid1in.value = "0"
-      var slid1inp = document.createElement('p');
-      slid1inp.className = "paralign";
-      var slid1inspan = document.createElement('span');
-      slid1inspan.className = "smallbutton";
-      slid1inspan.id = "damage_slider";
-      slid1inp.appendChild(slid1inspan);
-      slid1.appendChild(slid1in);
-      slid1.appendChild(slid1inp);
+      $('#slider_class').html($('#slider_class').html()
+      +'<input id="class" class="range-slider__range" type="range" min="0" max ="1" step="0.0001" value="0"/>'
+      +'<p id= "class_val">'
+      +'</p>');
 
     }
-    if (packet.class_labels.length != 0) {
-      //  <!-- aidrmaster is the id of the div tag under the AIDR Label category button.-->
-      dyrender('aidrmaster', 'aidr', '');
-      for (i in packet.class_labels) {
-        //  <!-- Creating the checkboxes and labels dynamically for aidr-->
-        var slc2 = document.getElementById('aidr');
-        var ele = packet.class_labels[i];
-        var check = ele.charAt(0).toUpperCase() + ele.slice(1);
-        var checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.className = "aidr form-check-input";
-        checkbox.value = ele;
-        slc2.appendChild(checkbox);
-        var label = document.createElement('label')
-        label.setAttribute('style', 'color:#000000;');
-        label.htmlFor = ele;
-        // if there is no aidr, do not display anything
-        if ((ele == "null" || ele == '') && packet.class_labels.length == 1) {
-          checkbox.style.display = 'none';
-          var x = document.getElementById("class_accordion");
-          x.innerHTML = "";
+
+    if(packet.sentiment_labels.length != 0){
+      for(i in packet.sentiment_labels){
+        var check_val = 'sentiment_check'+i;
+        var nice_label = packet.sentiment_labels[i];
+        var pretty_class = 'p-danger-o';
+        if(nice_label == 'Positive'){
+          pretty_class = 'p-success-o';
+        } else if(nice_label == 'Negative'){
+          pretty_class = 'p-danger-o';
+        } else if(nice_label == 'Neutral'){
+          pretty_class = 'p-warning-o';
         }
-        label.appendChild(document.createTextNode(check.replace(/_/g, ' ')));
-        slc2.appendChild(label);
-        slc2.appendChild(document.createElement("br"));
-        checkbox.setAttribute("onClick", "task(event);");
 
+        $('#render_sentiment').html($('#render_sentiment').html()
+        +'<div class="pretty p-default p-curve p-thick p-smooth">'
+        +'<input type="checkbox" class = "sentiment_checks" value="'+packet.sentiment_labels[i]+'" onClick="filter();"/>'
+        + '<div class="state ' +pretty_class+'">'
+        +'  <label for="'+check_val+'"> '+nice_label+' </label>'
+        + '</div>'
+        +'</div>'
+        +'<br>'
+        +'<br>');
       }
-
-      var slid2 = document.getElementById('slidecontainer2');
-      var slid2in = document.createElement('input');
-      slid2in.type = "range"
-      slid2in.className = "slider";
-      slid2in.id = "myRange1";
-      slid2in.min = "0";
-      slid2in.max = "1";
-      slid2in.step = "0.0001";
-      slid2in.value = "0"
-      var slid2inp = document.createElement('p');
-      slid2inp.className = "paralign";
-      var slid2inspan = document.createElement('span');
-      slid2inspan.className = "smallbutton";
-      slid2inspan.id = "class_slider";
-      slid2inp.appendChild(slid2inspan);
-      slid2.appendChild(slid2in);
-      slid2.appendChild(slid2inp);
+      $('#slider_sentiment').html($('#slider_sentiment').html()
+      +'<input id="sentiment" class="range-slider__range" type="range" min="0" max ="1" step="0.0001" value="0"/>'
+      +'<p id= "sentiment_val">'
+      +'</p>');
 
     }
-    if (packet.sentiment_labels.length != 0) {
-      //  <!-- sentimentmaster is the id of the div tag under the Sentiment category button.-->
 
-      dyrender('sentimentmaster', 'sentiment', '');
-
-      for (i in packet.sentiment_labels) {
-        // <!-- Creating the checkboxes and labels dynamically for sentiment -->
-
-        var slc3 = document.getElementById('sentiment');
-        var ele = packet.sentiment_labels[i];
-        var checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.className = "sentiment form-check-input";
-        checkbox.value = ele;
-        slc3.appendChild(checkbox);
-        var label = document.createElement('label')
-        label.htmlFor = ele;
-        label.setAttribute('style', 'color:#000000;');
-        te = ele;
-        // if there is no aidr, do not display anything
-        if ((ele == "null" || ele == '') && packet.sentiment_labels.length == 1) {
-          te = "";
-          checkbox.style.display = 'none';
-          var x = document.getElementById("sentiment_accordion");
-          x.innerHTML = "";
+    if(packet.damage_labels.length != 0){
+      for(i in packet.damage_labels){
+        var check_val = 'damage_check'+i;
+        var nice_label = packet.damage_labels[i];
+        if (nice_label == 'null') {
+          nice_label = 'Unknown';
+        } else if (nice_label == 'None') {
+          nice_label = 'Zero';
+        } else if (nice_label == 'Severe') {
+          nice_label = 'High';
         }
-        label.appendChild(document.createTextNode(te));
-        slc3.appendChild(label);
-        slc3.appendChild(document.createElement("br"));
-        checkbox.setAttribute("onClick", "task(event);");
-
+        $('#render_severity').html($('#render_severity').html()
+        +'<div class="pretty p-default p-curve p-thick p-smooth">'
+        +'<input type="checkbox" class = "severity_checks" value="'+packet.damage_labels[i]+'" onClick="filter();"/>'
+        + '<div class="state p-danger-o">'
+        +'  <label for="'+check_val+'"> '+nice_label+' </label>'
+        + '</div>'
+        +'</div>'
+        +'<br>'
+        +'<br>');
       }
-      var slid3 = document.getElementById('slidecontainer3');
-      var slid3in = document.createElement('input');
-      slid3in.type = "range"
-      slid3in.className = "slider";
-      slid3in.id = "myRange2";
-      slid3in.min = "0";
-      slid3in.max = "1";
-      slid3in.step = "0.0001";
-      slid3in.value = "0"
-      var slid3inp = document.createElement('p');
-      slid3inp.className = "paralign";
-      var slid3inspan = document.createElement('span');
-      slid3inspan.className = "smallbutton";
-      slid3inspan.id = "sentiment_slider";
-      slid3inp.appendChild(slid3inspan);
-      slid3.appendChild(slid3in);
-      slid3.appendChild(slid3inp);
+      $('#slider_severity').html($('#slider_severity').html()
+      +'<input id="damage" class="range-slider__range" type="range" min="0" max ="1" step="0.0001" value="0"/>'
+      +'<p id= "damage_val">'
+      +'</p>');
+
     }
+
     if (packet.image_existence_labels.length != 0) {
       //  <!-- imagemaster is the id of the div tag under the Image category button.-->
-
-      dyrender('imagemaster', 'image', '');
 
       for (i in packet.image_existence_labels) {
         //<!-- Creating the checkboxes and labels dynamically for sentiment -->
 
-        var slc4 = document.getElementById("image");
-        var ele = packet.image_existence_labels[i];
-        var check = ele.charAt(0).toUpperCase() + ele.slice(1);
-        var checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.className = "image form-check-input";
-        checkbox.value = ele;
-        slc4.appendChild(checkbox);
-        var label = document.createElement('label')
-        label.htmlFor = ele;
-        label.setAttribute('style', 'color:#000000;');
-        label.appendChild(document.createTextNode(check));
-        slc4.appendChild(label);
-        slc4.appendChild(document.createElement("br"));
-        checkbox.setAttribute("onClick", "task(event);");
+        var check_val = 'image_existence_check'+i;
+        var nice_label = labelize(packet.image_existence_labels[i]);
 
+        $('#render_existence').html($('#render_existence').html()
+        +'<div class="pretty p-default p-curve">'
+        +'<input type="radio" name="color" value="'+packet.image_existence_labels[i]+'" class = "image_existence_checks">'
+        + '<div class="state p-danger-o">'
+        +'  <label for="'+check_val+'"> '+nice_label+' </label>'
+        + '</div>'
+        +'</div>'
+        +'<br>'
+        +'<br>');
       }
+
+      $("input:radio").on("click",function (e) {
+          var inp=$(this); //cache the selector
+          if (inp.is(".selected_radio")) { //see if it has the selected class
+              inp.prop("checked",false).removeClass("selected_radio");
+              filter();
+              return;
+          }
+          $("input:radio[name='"+inp.prop("name")+"'].selected_radio").removeClass("selected_radio");
+          inp.addClass("selected_radio");
+          filter();
+      });
+
     }
-  }
-  //<!-- Slider  -->
-  var slider = document.getElementById("myRange");
-  var output = document.getElementById("damage_slider");
-  output.innerHTML = slider.value;
-  slider.oninput = function() {
-    output.innerHTML = this.value;
-  }
-  slider.onmouseup = function() {
-    task(event);
-  }
-  var slider1 = document.getElementById("myRange1");
-  var output1 = document.getElementById("class_slider");
-  output1.innerHTML = slider1.value;
-  slider1.oninput = function() {
-    output1.innerHTML = this.value;
-  }
-  slider1.onmouseup = function() {
-    task(event);
-  }
-  var slider2 = document.getElementById("myRange2");
-  var output2 = document.getElementById("sentiment_slider");
-  output2.innerHTML = slider2.value;
-  slider2.oninput = function() {
-    output2.innerHTML = this.value;
-  }
-  slider2.onmouseup = function() {
-    task(event);
+
   }
 }
 
@@ -483,105 +477,20 @@ function fillupAccordions() {
 // <!-- Then an appropriate query is written - query1, query2 and query3 -->
 // <!-- for image, query4 is written directly -->
 
-function task(e) {
-  var checks = document.getElementsByClassName('severity');
-  var str = '';
-  if (locals.display_severity == "Severity: " || locals.display_severity == " ") {
-    for (i = 0; i < packet.damage_labels.length; i++) {
-      if (checks[i].checked === true) {
-        str += checks[i].value + " ";
-      }
-    }
-  }
-  console.log('str: '+str);
-
-  if (str != '') {
-    str = str.trim();
-    str = str.split(' ');
-  }
-  var checks2 = document.getElementsByClassName('aidr');
-  var str2 = '';
-  if (locals.display_aidr == "Humanitarian Category: " || locals.display_aidr == " ") {
-    for (j = 0; j < packet.class_labels.length; j++) {
-      if (checks2[j].checked === true) {
-        str2 += checks2[j].value + " ";
-      }
-    }
-  }
-  if (str2 != '') {
-    str2 = str2.trim();
-    str2 = str2.split(' ');
-  }
-  var checks3 = document.getElementsByClassName('sentiment');
-  var str3 = '';
-  if (locals.display_sentiment == "Sentiment: " || locals.display_sentiment == " ") {
-    for (k = 0; k < packet.sentiment_labels.length; k++) {
-      if (checks3[k].checked === true) {
-        str3 += checks3[k].value + " ";
-      }
-    }
-  }
-  if (str3 != '') {
-    str3 = str3.trim();
-    str3 = str3.split(' ');
-  }
-  query4 = '';
-  var checks4 = document.getElementsByClassName('image');
-  if (checks4[0].checked == true && checks4[1].checked == false) {
-    query4 = "no";
-  } else if (checks4[1].checked == true && checks4[0].checked == false) {
-    query4 = "yes";
-  } else if (checks4[1].checked == true && checks4[0].checked == true) {
-    query4 = "both1";
-  } else if (checks4[1].checked == false && checks4[0].checked == false) {
-    query4 = "both2";
-  }
-  var idc = {
-    'null': false,
-    'None': false,
-    'Mild': false,
-    'Severe': false
-  };
-  query = '';
-  query1 = '';
-  query2 = '';
-  query3 = '';
-  for (l = 0; l < str.length; l++) {
-    if (str[l] == "null") {
-      idc[str[l]] = true;
-      query += '{image_damage_class:' + '\"' + '\"' + '}';
-      query1 += '{image_damage_class:' + '\"' + '\"' + '}';
-    } else {
-      idc[str[l]] = true;
-      query += '{image_damage_class:' + '\"' + str[l] + '\"' + '}';
-      query1 += '{image_damage_class:' + '\"' + str[l] + '\"' + '}';
-    }
-  }
-  for (m = 0; m < str2.length; m++) {
-    query += '{aidr_class_label:' + '\"' + str2[m] + '\"' + '}';
-    query2 += '{aidr_class_label:' + '\"' + str2[m] + '\"' + '}';
-  }
-  var sen = {
-    'Positive': false,
-    'Negative': false,
-    'Neutral': false
-  };
-  for (n = 0; n < str3.length; n++) {
-    query += '{sentiment:' + '\"' + str3[n] + '\"' + '}';
-    query3 += '{sentiment:' + '\"' + str3[n] + '\"' + '}';
-  }
-  // Then all the querying are combined and sent to the controller.
-  // Remember: Across different categories it is an "AND" cosntion, and within a category it is an "OR" condition
-  var qu = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById(
-    "class_slider").innerHTML + '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz';
-  query_code = '/tweets/filteror?q1=' + query1 + '&q2=' + query2 + '&q3=' + query3 + '&q4=' + query4 + '&q5=' + 1 + '&q7=' + 1 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById(
-    "class_slider").innerHTML + '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz';
-  tweet_loader(qu, active_flag);
-}
 //<!-- Load the slider  -->
 window.onload = function() {
-  tweet_loader('/tweets/filteror?q1=' + '' + '&q2=' + '' + '&q3=' + '' + '&q4=' + '' + '&q5=' + 0 + '&q7=' + 0 + '&q9=' + packet.collection_code + '&q10=' + document.getElementById("damage_slider").innerHTML + '&q11=' + document.getElementById("class_slider").innerHTML +
-    '&q12=' + document.getElementById("sentiment_slider").innerHTML + '&q8=' + 'xyz', active_flag);
+  tweet_loader('/tweets/filteror?q1=' + ''
+                + '&q2=' + ''
+                + '&q3=' + ''
+                + '&q4=' + ''
+                + '&q5=' + 0
+                + '&q7=' + 0
+                + '&q9=' + packet.collection_code
+                + '&q10=' + slider_values.damage
+                + '&q11=' + slider_values.class
+                + '&q12=' + slider_values.sentiment
+                + '&q8=' + 'xyz', active_flag
+              );
 }
 
 
