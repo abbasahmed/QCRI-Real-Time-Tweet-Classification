@@ -412,11 +412,11 @@ function fillupAccordions() {
         var check_val = 'damage_check'+i;
         var nice_label = packet.damage_labels[i];
         if (nice_label == 'null') {
-          nice_label = 'Unknown';
+          nice_label = 'No Image';
         } else if (nice_label == 'None') {
-          nice_label = 'Zero';
+          nice_label = 'Little to No Damage';
         } else if (nice_label == 'Severe') {
-          nice_label = 'High';
+          nice_label = 'Severe';
         }
         $('#render_severity').html($('#render_severity').html()
         +'<div class="pretty p-default p-curve p-thick p-smooth">'
