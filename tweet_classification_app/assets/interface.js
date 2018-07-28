@@ -112,7 +112,7 @@ function Action(el) {
   windoww = my_window;
   my_window.focus();
   active_flag = 0;
-  task(event);
+  filter();
   if (el.value === "Start")
     el.value = "Stop";
   else

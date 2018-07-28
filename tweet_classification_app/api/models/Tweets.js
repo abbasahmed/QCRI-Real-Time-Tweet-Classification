@@ -17,7 +17,7 @@ module.exports = {
     aidr_class_label:{
       type:'string'
     },
-      sentiment:{
+    sentiment:{
       type:'string'
     },
     latitude:{

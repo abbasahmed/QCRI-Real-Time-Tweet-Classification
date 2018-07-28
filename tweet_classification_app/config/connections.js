@@ -28,9 +28,9 @@ module.exports.connections = {
 	 * Installed by default.                                                    *
 	 *                                                                          *
 	 ***************************************************************************/
-	localDiskDb: {
-		adapter: 'sails-disk'
-	},
+	// localDiskDb: {
+	// 	adapter: 'sails-disk'
+	// },
 
 	/***************************************************************************
 	 *                                                                          *
@@ -60,7 +60,7 @@ module.exports.connections = {
 		adapter: 'sails-mongo',
 		host: 'localhost',
 		port: 27017,
-		database: 'QCRI' //type in your database here
+		database: 'QCRI' //type in your database name here
 	},
 
 	/***************************************************************************
@@ -77,15 +77,8 @@ module.exports.connections = {
 	//   host: 'localhost',
 	//   port: 5431,
 	//   user: 'zainab', // optional
-	//   password: 'dohacollege123', // optional
+	//   password: 'qwerty', // optional
 	//   database: 'twitter' //optional
 	// }
-
-
-	/***************************************************************************
-	 *                                                                          *
-	 * More adapters: https://github.com/balderdashy/sails                      *
-	 *                                                                          *
-	 ***************************************************************************/
 
 };
