@@ -7,6 +7,7 @@
   "dependencies": {
     "alasql": "^0.4.5",
     "ejs": "2.5.5",
+    "forever": "^0.15.3",
     "grunt": "^1.0.3",
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-coffee": "1.0.0",
@@ -23,6 +24,7 @@
     "leaflet": "0.7.7",
     "leaflet.markercluster": "0.5.0",
     "rc": "^1.2.8",
+    "redis": "^2.8.0",
     "sails": "~0.12.14",
     "sails-disk": "~0.10.9",
     "sails-mongo": "^0.12.3",
