@@ -43,14 +43,6 @@ module.exports.routes = {
 		controller: 'TweetsController',
 		action: 'findcoll',
 	},
-	'/test': {
-		view: 'test',
-		locals: {
-			layout: null,
-		},
-	},
-
-
 
 	/***************************************************************************
 	 *                                                                          *
