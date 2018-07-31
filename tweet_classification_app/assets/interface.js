@@ -22,7 +22,13 @@ var slider_values = {
 
 var active_flag = 1;
 
-var socket = io.sails.connect();
+var isRunning = false;
+var loader;
+
+var sockets = {
+   outer: io.sails.connect(),
+   inner: io.sails.connect(),
+};
 
 var icons = {
   'relevant_information': 'fa-thumbs-up',
@@ -97,7 +103,6 @@ function localizer(sentiment_tag, severity_tag, aidr_tag) {
   locals.display_severity = severity_tag;
 }
 
-
 function data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels) {
   packet.collection_code = collection_code;
   packet.class_labels = class_labels;
@@ -123,14 +128,15 @@ function openSideBar() {
   document.getElementById("mySidenav").style.width = "250px";
   document.getElementById("main").style.marginLeft = "250px";
   $("#filter-toggle").attr("onclick","closeSideBar()");
+  map.invalidateSize();
 }
 
 function closeSideBar() {
   document.getElementById("mySidenav").style.width = "0";
   document.getElementById("main").style.marginLeft= "0";
   $("#filter-toggle").attr("onclick","openSideBar()");
+  map.invalidateSize()
 }
-
 
 function sliders(){
 
@@ -161,7 +167,7 @@ function sliders(){
     filter();
   }
   sentiment_slider.onmouseup = function() {
-    slider_values["senti"] = ss_val.innerHTML;
+    slider_values["sentiment"] = ss_val.innerHTML;
     filter();
   }
   damage_slider.onmouseup = function() {
@@ -170,71 +176,83 @@ function sliders(){
   }
 }
 
+function addToMap(tweets){
+  for (i in tweets) {
+    let latitude = tweets[i].latitude;
+    let longitude = tweets[i].longitude;
+    let tweet_text = tweets[i].tweet_text;
+    let img_src = tweets[i].image_physical_location;
+    let class_label = labelize(tweets[i].aidr_class_label);
+    let sentiment_label = tweets[i].sentiment;
+    let severity_label = tweets[i].image_damage_class;
 
-function tweet_loader(tQuery, flag) {
-  //1 for not active
-  //0 for active
-  var timer = 5000;
+    var tweet_link = linkify(tweet_text);
 
-  if(flag == 1){
-    timer = 0;
+    let marker_icon = iconMaker(class_label, sentiment_label);
+
+    var marker = new L.marker([longitude, latitude], {
+      icon: marker_icon
+    }).addTo(mcg);
+
+    // in the database, the records that are null for severity, we set it to unknown, and those which say None we set it to Zero
+    if (severity_label == '') {
+      severity_label = "Unknown";
+    }
+    if (severity_label == 'None') {
+      severity_label = "Zero";
+    }
+
+    if(img_src != ''){
+      marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img class='size'  src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
+        locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
+    } else {
+      marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
+        locals.display_severity + '</b>' + severity_label + '</p>');
+    }
   }
-
-  var loader = setInterval(
-    function() {
-      socket.get(tQuery, function(tweets) {
-        mcg.clearLayers();
-        map.addLayer(mcg);
-        for (i in tweets.sim) {
-          let latitude = tweets.sim[i].latitude;
-          let longitude = tweets.sim[i].longitude;
-          let tweet_text = tweets.sim[i].tweet_text;
-          let img_src = tweets.sim[i].image_physical_location;
-          let class_label = labelize(tweets.sim[i].aidr_class_label);
-          let sentiment_label = tweets.sim[i].sentiment;
-          let severity_label = tweets.sim[i].image_damage_class;
-
-          var tweet_link = linkify(tweet_text);
-
-          let marker_icon = iconMaker(class_label, sentiment_label);
-
-          var marker = new L.marker([longitude, latitude], {
-            icon: marker_icon
-          }).addTo(mcg);
-
-          // in the database, the records that are null for severity, we set it to unknown, and those which say None we set it to Zero
-          if (severity_label == '') {
-            severity_label = "Unknown";
-          }
-          if (severity_label == 'None') {
-            severity_label = "Zero";
-          }
-
-          if(img_src != ''){
-            marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img class='size'  src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
-              locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
-          } else {
-            marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
-              locals.display_severity + '</b>' + severity_label + '</p>');
-          }
-        }
-        // this is to ensure the querying is done for new markers only
-        if (tweets.sim.length != 0) {
-          let new_time = tweets.sim[0].createtime;
-          let curr_query = locals.query_code;
-          var index = curr_query.indexOf("q8");
-          var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
-          locals.query_code = new_query;
-        }
-      });
-      if(flag == 1){
-        clearInterval(loader);
-      }
-    }, timer
-  );
-
 }
 
+function tweet_loader(tQuery, flag) {
+
+  if(isRunning){
+    clearInterval(loader);
+    isRunning = false;
+  }
+
+  sockets.outer.get(tQuery, function(tweets) {
+      mcg.clearLayers();
+      addToMap(tweets.sim);
+      map.addLayer(mcg);
+      // this is to ensure the querying is done for new markers only
+      if (tweets.sim.length != 0) {
+        let new_time = tweets.sim[0].createtime;
+        let curr_query = locals.query_code;
+        var index = curr_query.indexOf("q8");
+        var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
+        locals.query_code = new_query;
+      }
+    if (flag == 0) {
+      console.log("inifsdsdfst");
+      loader = setInterval(
+        function() {
+          isRunning = true;
+          sockets.inner.get(locals.query_code, function(innerTweets) {
+            addToMap(innerTweets.sim);
+            map.addLayer(mcg);
+            // ensure querying is done on new markers onle
+            if (innerTweets.sim.length != 0) {
+              let new_inner_time = innerTweets.sim[0].createtime;
+              let curr_inner_query = locals.query_code;
+              var inner_index = curr_inner_query.indexOf("q8");
+              var new_inner_query = curr_inner_query.replace(curr_inner_query.substring(inner_index + 3), new_inner_time);
+              locals.query_code = new_inner_query;
+            }
+          });
+        }, 5000);
+      // every 5 seconds the realtime aspect is done (e.g. refresh page 5 seconds wihtout any blinking)
+    }
+  });
+}
 
 function filter(){
 
@@ -298,9 +316,6 @@ function filter(){
       filter_query.sentiment+= '{sentiment:' + '\"' + active_filters.sentiment[i] + '\"' + '}';
   }
 
-
-  console.log(filter_query);
-
   var queryy = '/tweets/filteror?q1=' + filter_query.severity
                 + '&q2=' + filter_query.class
                 + '&q3=' + filter_query.sentiment
@@ -312,7 +327,6 @@ function filter(){
                 + '&q11=' + slider_values.class
                 + '&q12=' + slider_values.sentiment
                 + '&q8=' + 'xyz';
-  console.log(queryy);
 
   locals.query_code = '/tweets/filteror?q1=' + filter_query.severity
                         + '&q2=' + filter_query.class
@@ -325,9 +339,9 @@ function filter(){
                         + '&q11=' + slider_values.class
                         + '&q12=' + slider_values.sentiment
                         + '&q8=' + 'xyz';
+
   tweet_loader(queryy, active_flag);
 }
-
 
 function fillupAccordions() {
 
@@ -509,7 +523,6 @@ function unlabelize(str) {
   str = str.split(" ").join("_");
   return str.toLowerCase();
 }
-
 
 function linkify(tweet) {
   var link_index = tweet.lastIndexOf('https://');
