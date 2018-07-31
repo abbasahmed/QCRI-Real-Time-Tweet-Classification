@@ -24,12 +24,12 @@
     "leaflet": "0.7.7",
     "leaflet.markercluster": "0.5.0",
     "rc": "^1.2.8",
-    "redis": "^2.8.0",
     "sails": "~0.12.14",
     "sails-disk": "~0.10.9",
     "sails-mongo": "^0.12.3",
     "sails-postgresql": "^0.11.4",
-    "socket.io": "^2.1.1"
+    "socket.io": "^2.1.1",
+    "socket.io-redis": "^1.1.1"
   },
   "scripts": {
     "debug": "node debug app.js",

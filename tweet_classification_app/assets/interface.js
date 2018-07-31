@@ -48,18 +48,17 @@ var colors = {
   'negative': 'red',
 }
 
-var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-  '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-  'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-  mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+var mapbox_att = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>  contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/"> CC-BY-SA </a><strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>';
+
+var mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 // street and satellite view from mapbox
 var streets = L.tileLayer(mbUrl, {
     id: 'mapbox.streets',
-    attribution: mbAttr
+    attribution: mapbox_att
   }),
   satellite = L.tileLayer(mbUrl, {
     id: 'mapbox.streets-satellite',
-    attribution: mbAttr
+    attribution: mapbox_att
   });
 
 var baseLayers = {
@@ -128,6 +127,9 @@ function Action(el) {
 function openSideBar() {
   document.getElementById("mySidenav").style.width = "250px";
   document.getElementById("main").style.marginLeft = "250px";
+  document.getElementsByClassName("leaflet-control-zoom")[0].style.marginRight = "260px";
+  document.getElementsByClassName("leaflet-control-layers")[0].style.marginRight = "260px";
+  document.getElementsByClassName("leaflet-control-attribution")[0].style.marginRight = "260px";
   $("#filter-toggle").attr("onclick","closeSideBar()");
   map.invalidateSize();
 }
@@ -135,6 +137,9 @@ function openSideBar() {
 function closeSideBar() {
   document.getElementById("mySidenav").style.width = "0";
   document.getElementById("main").style.marginLeft= "0";
+  document.getElementsByClassName("leaflet-control-zoom")[0].style.marginRight = "10px";
+  document.getElementsByClassName("leaflet-control-layers")[0].style.marginRight = "10px";
+  document.getElementsByClassName("leaflet-control-attribution")[0].style.marginRight = "0px";
   $("#filter-toggle").attr("onclick","openSideBar()");
   map.invalidateSize()
 }

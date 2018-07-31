@@ -1,42 +1,38 @@
 <% title = 'Tweet Classification' %>
 
+<div id= "main">
+  <div id="mySidenav" class="sidenav">
+    <button onclick="Action(this);" type="buttons" value="Start" id="allbus" class="btn btn-success"> Start
+    </button>
+    <br>
+    <br>
+    <br>
 
-<div id="mySidenav" class="sidenav">
-  <button onclick="Action(this);" type="buttons" value="Start" id="allbus" class="btn btn-success"> Start
-  </button>
-  <br>
-  <br>
-  <br>
+    <p id="event_name"></p>
 
-  <p id="event_name"></p>
+    <button class="accordion">Filter By Humanitarian Labels</button>
+    <div class="panel">
+      <div id="render_class"></div>
+      <div class="range-slider" id="slider_class"></div>
+    </div>
 
-  <button class="accordion">Filter By Humanitarian Labels</button>
-  <div class="panel">
-    <div id="render_class"></div>
-    <div class="range-slider" id="slider_class"></div>
+    <button class="accordion">Filter By Sentiment</button>
+    <div class="panel">
+      <div id="render_sentiment"></div>
+      <div class="range-slider" id="slider_sentiment"></div>
+    </div>
+
+    <button class="accordion">Filter By Severity</button>
+    <div class="panel">
+      <div id="render_severity"></div>
+      <div class="range-slider" id="slider_severity"></div>
+    </div>
+
+    <button class="accordion">Filter By Image Existence</button>
+    <div class="panel">
+      <div id="render_existence"></div>
+    </div>
   </div>
-
-  <button class="accordion">Filter By Sentiment</button>
-  <div class="panel">
-    <div id="render_sentiment"></div>
-    <div class="range-slider" id="slider_sentiment"></div>
-  </div>
-
-  <button class="accordion">Filter By Severity</button>
-  <div class="panel">
-    <div id="render_severity"></div>
-    <div class="range-slider" id="slider_severity"></div>
-  </div>
-
-  <button class="accordion">Filter By Image Existence</button>
-  <div class="panel">
-    <div id="render_existence"></div>
-  </div>
-  </div>
-</div>
-
-
-<div id= "main" class = "wrapper">
 
   <a id = "filter-toggle" class="menu-toggle rounded" href="javascript:;" class="closebtn float-right" onclick="openSideBar()">
     <i class="fas fa-sliders-h" style="text-decoration: none !important;"></i>
