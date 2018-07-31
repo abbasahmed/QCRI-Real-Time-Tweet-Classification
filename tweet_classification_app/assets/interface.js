@@ -288,9 +288,9 @@ function filter(){
   }
 
   if (image_existence_filters[0].checked == true && image_existence_filters[1].checked == false) {
-    active_filters.image_existence = 'no';
-  } else if (image_existence_filters[0].checked == false && image_existence_filters[1].checked == true){
     active_filters.image_existence = 'yes';
+  } else if (image_existence_filters[0].checked == false && image_existence_filters[1].checked == true){
+    active_filters.image_existence = 'no';
   } else if (image_existence_filters[0].checked == false && image_existence_filters[1].checked == false){
     active_filters.image_existence = 'both2';
   }
