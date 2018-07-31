@@ -183,6 +183,7 @@ function addToMap(tweets){
     let longitude = tweets[i].longitude;
     let tweet_text = tweets[i].tweet_text;
     let img_src = tweets[i].image_physical_location;
+    if(img_src.indexOf("|")!=-1){img_src = image.substring(0, img_src.indexOf("|"));};
     let class_label = labelize(tweets[i].aidr_class_label);
     let sentiment_label = tweets[i].sentiment;
     let severity_label = tweets[i].image_damage_class;
@@ -204,11 +205,11 @@ function addToMap(tweets){
     }
 
     if(img_src != ''){
-      marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img id='tweet_image' style='width:100%;height:100%' src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
-        locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
+      marker.bindPopup('<a target="_blank" href="'+tweet_link+'">Click to Display Tweet</a>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img id='tweet_image' style='width:100%;height:100%' src='" + img_src + "'/></a>" + '<p>' + '<b>Humanitarian Category: </b>' + class_label + '</p>' + '<p>' + '<b>Sentiment: </b>' + sentiment_label + '</p>'
+      + '<p>' + '<b>Severity: </b>' + severity_label + '</p>');
     } else {
-      marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
-        locals.display_severity + '</b>' + severity_label + '</p>');
+      marker.bindPopup('<a target="_blank" href="'+tweet_link+'">Click to Display Tweet</a>' + '<p>' + '<b>Humanitarian Category: </b>' + class_label + '</p>' + '<p>' + '<b>Sentiment: </b>' + sentiment_label + '</p>'
+      + '<p>' + '<b>Severity: </b>' + severity_label + '</p>');
     }
   }
 }
@@ -403,6 +404,8 @@ function fillupAccordions() {
           pretty_class = 'p-danger-o';
         } else if(nice_label == 'Neutral'){
           pretty_class = 'p-warning-o';
+        } else if(nice_label == 'null'){
+          continue;
         }
 
         $('#render_sentiment').html($('#render_sentiment').html()
@@ -525,11 +528,14 @@ function unlabelize(str) {
   return str.toLowerCase();
 }
 
-function linkify(tweet) {
-  var link_index = tweet.lastIndexOf('https://');
+function linkify(tweet){
+  var link_index = tweet.lastIndexOf('https://t.co');
   var tweet_words = tweet.substring(link_index);
   tweet_words = tweet_words.split(" ");
-  var link = tweet_words[0].replace(/['"]+/g, '');
+  var link = tweet_words[0].replace(/['"]+/g,'');
+  if((link_index == -1)){
+    return null;
+  }
   return link;
 }
 
