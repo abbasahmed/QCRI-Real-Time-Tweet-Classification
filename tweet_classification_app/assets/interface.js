@@ -113,15 +113,16 @@ function data(collection_code, class_labels, damage_labels, sentiment_labels, im
 }
 
 function Action(el) {
-  my_window = window.open('http://localhost:1337/sim/add', '', 'width=,height=,resizable=no');
-  windoww = my_window;
-  my_window.focus();
-  active_flag = 0;
-  filter();
-  if (el.value === "Start")
+  if (el.value === "Start"){
+    active_flag = 0;
     el.value = "Stop";
-  else
+    filter();
+  }
+  else{
+    active_flag = 0;
     el.value = "Start";
+    filter();
+  }
 }
 
 function openSideBar() {
@@ -232,7 +233,6 @@ function tweet_loader(tQuery, flag) {
         locals.query_code = new_query;
       }
     if (flag == 0) {
-      console.log("inifsdsdfst");
       loader = setInterval(
         function() {
           isRunning = true;
@@ -365,7 +365,8 @@ function fillupAccordions() {
     $("#filter-toggle > .fa-sliders-h, #filter-toggle > .fa-times").toggleClass("fa-sliders-h fa-times");
   });
 
-
+  $('#event_name').empty();
+  $('#event_name').append(prettycode(packet.collection_code));
 
   if (packet.total_labels != 0) {
 
@@ -549,4 +550,15 @@ function iconMaker(class_label, sentiment_label) {
     prefix: 'fa'
   });
   return lazyIcon;
+}
+
+function prettycode(code){
+  code = code.toLowerCase();
+  var code_words = code.split("_");
+  var codeNum = code_words[1];
+  var pretty_code = code_words.join(" ");
+  var code_index = pretty_code.indexOf(codeNum);
+  pretty_code = pretty_code.substring(code_index);
+
+  return labelize(pretty_code);
 }

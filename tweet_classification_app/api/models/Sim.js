@@ -7,6 +7,8 @@
 
 module.exports = {
 
+  tableName:'aidr_data_for_visualization',
+
   attributes: {
   	latitude:{
       type:'float'
@@ -33,4 +35,3 @@ module.exports = {
   },
   connection : 'mongodb'
 };
-
