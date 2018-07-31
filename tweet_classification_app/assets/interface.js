@@ -204,7 +204,7 @@ function addToMap(tweets){
     }
 
     if(img_src != ''){
-      marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img class='size'  src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
+      marker.bindPopup('<p>' + tweet_link + '</p>' + "<a target='" + '_blank' + "' href='" + img_src + "'><img id='tweet_image' style='width:100%;height:100%' src='" + img_src + "'/></a>" + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' +
         locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' + locals.display_severity + '</b>' + severity_label + '</p>');
     } else {
       marker.bindPopup('<p>' + tweet_link + '</p>' + '<p>' + '<b>' + locals.display_aidr + '</b>' + class_label + '</p>' + '<p>' + '<b>' + locals.display_sentiment + '</b>' + sentiment_label + '</p>' + '<p>' + '<b>' +
