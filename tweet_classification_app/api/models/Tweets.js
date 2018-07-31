@@ -7,6 +7,8 @@
 
 module.exports = {
 
+  tableName: 'aidr_data_for_visualization',
+
   attributes: {
     tweet_text:{
       type:'string'
