@@ -1,7 +1,7 @@
 module.exports = {
 
   findcoll: function(req, res) { //function to find different collection codes
-    Tweets.native(function(err1, coll) { //This is a seperate database which has a few already existing data so that we can get existing collection codes for sim table from these pre existing data
+    Tweets.native(function(err1, coll) {
       if (err1) {
         res.send(500, {
           error: 'Database error'
@@ -376,4 +376,5 @@ module.exports = {
       }
     });
   }
+
 };

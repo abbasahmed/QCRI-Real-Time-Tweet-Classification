@@ -2,7 +2,7 @@
 
 <div id= "main">
   <div id="mySidenav" class="sidenav">
-    <button onclick="Action(this);" type="buttons" value="Start" id="allbus" class="btn btn-success"> Start
+    <button onclick="simulator(this);" type="buttons" value="Start" id="allbus" class="btn btn-success"> Start
     </button>
     <br>
     <br>
@@ -56,7 +56,6 @@
   var display_aidr = '<%= sails.config.myconf.displayaidr %>';
   data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels);
   localizer(display_sentiment, display_severity, display_aidr);
-  fillupAccordions();
-  sliders();
+  render_accordion();
 
 </script>

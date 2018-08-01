@@ -22,7 +22,6 @@ var slider_values = {
 
 var active_flag = 1;
 
-var isRunning = false;
 var loader;
 
 var sockets = {
@@ -52,6 +51,7 @@ var mapbox_att = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © 
 
 var mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 // street and satellite view from mapbox
+
 var streets = L.tileLayer(mbUrl, {
     id: 'mapbox.streets',
     attribution: mapbox_att
@@ -92,10 +92,6 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
 map.invalidateSize();
 
-// Start button enables the simulator
-
-var windoww = "";
-
 function localizer(sentiment_tag, severity_tag, aidr_tag) {
   locals.display_sentiment = sentiment_tag;
   locals.display_aidr = aidr_tag;
@@ -111,15 +107,19 @@ function data(collection_code, class_labels, damage_labels, sentiment_labels, im
   packet.total_labels = class_labels.length + damage_labels.length + sentiment_labels.length + image_existence_labels.length;
 }
 
-function Action(el) {
-  if (el.value === "Start"){
+function simulator(state) {
+  if (state.value === "Start"){
     active_flag = 0;
-    el.value = "Stop";
+    state.value = "Stop";
+    state.innerHTML = "Stop";
+    var socketo = io.sails.connect();
+    socketo.get('/sim/add');
     filter();
   }
   else{
-    active_flag = 0;
-    el.value = "Start";
+    active_flag = 1;
+    state.value = "Start";
+    state.innerHTML = "Start";
     filter();
   }
 }
@@ -220,12 +220,6 @@ function addToMap(tweets){
 }
 
 function tweet_loader(tQuery, flag) {
-
-  if(isRunning){
-    clearInterval(loader);
-    isRunning = false;
-  }
-
   sockets.outer.get(tQuery, function(tweets) {
       mcg.clearLayers();
       addToMap(tweets.sim);
@@ -234,14 +228,15 @@ function tweet_loader(tQuery, flag) {
       if (tweets.sim.length != 0) {
         let new_time = tweets.sim[0].createtime;
         let curr_query = locals.query_code;
-        var index = curr_query.indexOf("q8");
-        var new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
+        let index = curr_query.indexOf("q8");
+        let new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
         locals.query_code = new_query;
       }
     if (flag == 0) {
+      clearInterval(loader);
       loader = setInterval(
         function() {
-          isRunning = true;
+          console.log(new(Date));
           sockets.inner.get(locals.query_code, function(innerTweets) {
             addToMap(innerTweets.sim);
             map.addLayer(mcg);
@@ -249,8 +244,8 @@ function tweet_loader(tQuery, flag) {
             if (innerTweets.sim.length != 0) {
               let new_inner_time = innerTweets.sim[0].createtime;
               let curr_inner_query = locals.query_code;
-              var inner_index = curr_inner_query.indexOf("q8");
-              var new_inner_query = curr_inner_query.replace(curr_inner_query.substring(inner_index + 3), new_inner_time);
+              let inner_index = curr_inner_query.indexOf("q8");
+              let new_inner_query = curr_inner_query.replace(curr_inner_query.substring(inner_index + 3), new_inner_time);
               locals.query_code = new_inner_query;
             }
           });
@@ -349,7 +344,7 @@ function filter(){
   tweet_loader(queryy, active_flag);
 }
 
-function fillupAccordions() {
+function render_accordion() {
 
   var acc = document.getElementsByClassName("accordion");
   var i;
@@ -489,10 +484,9 @@ function fillupAccordions() {
           inp.addClass("selected_radio");
           filter();
       });
-
     }
-
   }
+  sliders();
 }
 
 // <!-- For aidr, sentiment and image damage class, we find which checboxes are checked so that we can query appropriately -->
