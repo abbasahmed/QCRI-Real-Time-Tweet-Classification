@@ -7,12 +7,7 @@ var packet = {
   total_labels: 0,
 };
 
-var locals = {
-  display_sentiment: '',
-  display_aidr: '',
-  display_severity: '',
-  query_code: '',
-};
+var query_code = '';
 
 var slider_values = {
   damage: 0,
@@ -92,12 +87,6 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
 map.invalidateSize();
 
-function localizer(sentiment_tag, severity_tag, aidr_tag) {
-  locals.display_sentiment = sentiment_tag;
-  locals.display_aidr = aidr_tag;
-  locals.display_severity = severity_tag;
-}
-
 function data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels) {
   packet.collection_code = collection_code;
   packet.class_labels = class_labels;
@@ -112,8 +101,8 @@ function simulator(state) {
     active_flag = 0;
     state.value = "Stop";
     state.innerHTML = "Stop";
-    var socketo = io.sails.connect();
-    socketo.get('/sim/add');
+    //var sim_socket = io.sails.connect();
+    //sim_socket.get('/sim/add');
     filter();
   }
   else{
@@ -227,26 +216,25 @@ function tweet_loader(tQuery, flag) {
       // this is to ensure the querying is done for new markers only
       if (tweets.sim.length != 0) {
         let new_time = tweets.sim[0].createtime;
-        let curr_query = locals.query_code;
+        let curr_query = query_code;
         let index = curr_query.indexOf("q8");
         let new_query = curr_query.replace(curr_query.substring(index + 3), new_time);
-        locals.query_code = new_query;
+        query_code = new_query;
       }
     if (flag == 0) {
       clearInterval(loader);
       loader = setInterval(
         function() {
-          console.log(new(Date));
-          sockets.inner.get(locals.query_code, function(innerTweets) {
+          sockets.inner.get(query_code, function(innerTweets) {
             addToMap(innerTweets.sim);
             map.addLayer(mcg);
-            // ensure querying is done on new markers onle
+            // ensure querying is done on new markers only
             if (innerTweets.sim.length != 0) {
               let new_inner_time = innerTweets.sim[0].createtime;
-              let curr_inner_query = locals.query_code;
+              let curr_inner_query = query_code;
               let inner_index = curr_inner_query.indexOf("q8");
               let new_inner_query = curr_inner_query.replace(curr_inner_query.substring(inner_index + 3), new_inner_time);
-              locals.query_code = new_inner_query;
+              query_code = new_inner_query;
             }
           });
         }, 5000);
@@ -317,7 +305,7 @@ function filter(){
       filter_query.sentiment+= '{sentiment:' + '\"' + active_filters.sentiment[i] + '\"' + '}';
   }
 
-  var queryy = '/tweets/filteror?q1=' + filter_query.severity
+  let query = '/tweets/filteror?q1=' + filter_query.severity
                 + '&q2=' + filter_query.class
                 + '&q3=' + filter_query.sentiment
                 + '&q4=' + filter_query.image_existence
@@ -329,7 +317,7 @@ function filter(){
                 + '&q12=' + slider_values.sentiment
                 + '&q8=' + 'xyz';
 
-  locals.query_code = '/tweets/filteror?q1=' + filter_query.severity
+  query_code = '/tweets/filteror?q1=' + filter_query.severity
                         + '&q2=' + filter_query.class
                         + '&q3=' + filter_query.sentiment
                         + '&q4=' + filter_query.image_existence
@@ -341,7 +329,7 @@ function filter(){
                         + '&q12=' + slider_values.sentiment
                         + '&q8=' + 'xyz';
 
-  tweet_loader(queryy, active_flag);
+  tweet_loader(query, active_flag);
 }
 
 function render_accordion() {

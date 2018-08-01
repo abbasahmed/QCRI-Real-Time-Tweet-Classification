@@ -31,7 +31,6 @@ module.exports = {
     image_physical_location:{
     	type : 'string'
     }
-
   },
   connection : 'mongodb'
 };

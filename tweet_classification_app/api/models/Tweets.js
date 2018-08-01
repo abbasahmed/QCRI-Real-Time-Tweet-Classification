@@ -27,6 +27,9 @@ module.exports = {
     },
     longitude:{
       type:'float'
+    },
+    image_physical_location:{
+      type : 'string'
     }
   },
   connection: 'mongodb'

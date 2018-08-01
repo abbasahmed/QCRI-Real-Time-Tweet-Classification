@@ -51,11 +51,7 @@
   var damage_labels = '<%=packet.damage_labels%>'.split(",");
   var sentiment_labels = '<%=packet.sentiment_labels%>'.split(",");
   var image_existence_labels = '<%=packet.image_existence_labels%>'.split(",");
-  var display_sentiment = '<%= sails.config.myconf.displaysentiment %>';
-  var display_severity = '<%= sails.config.myconf.displayseverity %>';
-  var display_aidr = '<%= sails.config.myconf.displayaidr %>';
   data(collection_code, class_labels, damage_labels, sentiment_labels, image_existence_labels);
-  localizer(display_sentiment, display_severity, display_aidr);
   render_accordion();
 
 </script>
