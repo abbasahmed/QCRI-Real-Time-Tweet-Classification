@@ -24,6 +24,30 @@ module.exports = {
     });
   },
 
+  search: function(req, res) { //function to find different collection codes
+    Tweets.native(function(err1, coll) {
+      if (err1) {
+        res.send(500, {
+          error: 'Database error'
+        });
+      } else {
+        coll.distinct("code", function(err2, results) { //achieved by using a distinct call with the particular collection code which returns all the different codes
+          if (err2) {
+            res.send(500, {
+              error: 'Database error'
+            });
+          } else {
+            let results_obj = [];
+            results.forEach(function(collection){
+              results_obj.push(collection);
+            });
+            res.send({collections: results_obj});
+          }
+        });
+      }
+    });
+  },
+
 
   filteror: function(req, res) { //function which queries database on each selection
 
