@@ -177,7 +177,12 @@ function addToMap(tweets){
     let longitude = tweets[i].longitude;
     let tweet_text = tweets[i].tweet_text;
     let img_src = tweets[i].image_physical_location;
-    if(img_src.indexOf("|")!=-1){img_src = image.substring(0, img_src.indexOf("|"));};
+    if(img_src == undefined || img_src == null){
+      img_src = '';
+    }
+    if(img_src.indexOf("|")!=-1){
+      img_src = img_src.substring(0, img_src.indexOf("|"));
+    };
     let class_label = labelize(tweets[i].aidr_class_label);
     let sentiment_label = tweets[i].sentiment;
     let severity_label = tweets[i].image_damage_class;
@@ -191,11 +196,19 @@ function addToMap(tweets){
     }).addTo(mcg);
 
     // in the database, the records that are null for severity, we set it to unknown, and those which say None we set it to Zero
-    if (severity_label == '') {
+    if (severity_label == '' || severity_label == null || severity_label == undefined) {
       severity_label = "Unknown";
     }
     if (severity_label == 'None') {
-      severity_label = "Zero";
+      severity_label = "Little to No Damage";
+    }
+
+    if(sentiment_label == '' || sentiment_label == null || sentiment_label == undefined){
+      sentiment_label = 'Not Available';
+    }
+
+    if(class_label == '' || class_label == null || class_label == undefined){
+      class_label = 'Not Available';
     }
 
     if(img_src != ''){
@@ -259,17 +272,17 @@ function filter(){
   }
 
   var str = '';
-  for (i = 0; i < packet.class_labels.length; i++) {
+  for (i = 0; i < active_filters.class.length; i++) {
     if (class_filters[i].checked == true) {
       active_filters.class.push(class_filters[i].value);
     }
   }
-  for (i = 0; i < packet.sentiment_labels.length; i++) {
+  for (i = 0; i < active_filters.sentiment.length; i++) {
     if (sentiment_filters[i].checked == true) {
       active_filters.sentiment.push(sentiment_filters[i].value);
     }
   }
-  for (i = 0; i < packet.damage_labels.length; i++) {
+  for (i = 0; i < active_filters.severity.length; i++) {
     if (severity_filters[i].checked == true) {
       active_filters.severity.push(severity_filters[i].value);
     }
