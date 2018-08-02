@@ -1,0 +1,46 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.bg {
+
+  width: 100%;
+            height: 100%;
+            max-height: 100%;
+            margin: 0;
+            padding: 0;
+            background-image: url('tweet.png');
+            background-size:100% 100%;
+            background-repeat: no-repeat;
+}
+
+
+.bg .btn {
+    position: absolute;
+    top: 38%;
+    left: 76%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    background-color: #555;
+    color: white;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+
+.bg .text_field {
+  width: 220px;
+  height: 32px;
+    position: absolute;
+    top: 38%;
+    left: 61%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+}
+
+.bg.btn:hover {
+    background-color: black;
+}
